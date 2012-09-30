@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.16 2012/05/06 05:49:10 phil Exp $
+# $Id: Makefile,v 1.17 2012/09/30 21:58:56 phil Exp $
 #
 # @Copyright@
 # 
@@ -57,6 +57,11 @@
 #
 #
 # $Log: Makefile,v $
+# Revision 1.17  2012/09/30 21:58:56  phil
+# Update openmpi to 1.6.2.
+# Create Modules for ethernet and IB
+# Add IB support - packages, openmpi configuration, udev rules
+#
 # Revision 1.16  2012/05/06 05:49:10  phil
 # Copyright Storm for Mamba
 #
@@ -98,20 +103,21 @@ REDHAT.ROOT = $(CURDIR)/../../
 -include $(ROCKSROOT)/etc/Rules.mk
 include Rules.mk
 
-MODULESPATH = /usr/share/Modules/modulefiles/
-MODULESFILE = rocks-openmpi
+%: %.in
+	$(SED) $(SEDSCRIPT) $^ > $@
 
 build:
 	bunzip2 -c openmpi-$(VERSION).tar.bz2 | $(TAR) -xf -
 	(					\
 		cd openmpi-$(VERSION) ;		\
 		./configure --prefix=$(PKGROOT) \
+			--with-openib --with-udapl \
 			--with-sge \
 			--enable-static ;	\
 		$(MAKE) all ;			\
 	)
 
-install::
+install:: 
 	(					\
 		cd openmpi-$(VERSION) ;		\
 		$(MAKE) prefix=$(ROOT)/$(PKGROOT) install ;	\
@@ -119,10 +125,8 @@ install::
 	( find mpi-selector -type f | grep -v CVS | \
 		cpio -pudv $(ROOT)/$(PKGROOT)/share/ )
 
-	mkdir -p $(ROOT)/$(MODULESPATH)
-	install -m 755 $(MODULESFILE) $(ROOT)/$(MODULESPATH)
-
 clean::
 	rm -rf openmpi-$(VERSION)
 	rm -rf $(NAME).spec.in
+
 
